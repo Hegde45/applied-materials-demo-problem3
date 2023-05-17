@@ -44,6 +44,7 @@ def default_dataframes():
     st.header("Sales Summary Statistics", anchor=False)
     st.dataframe(st.session_state['sales_data'].describe())
 
+    st.divider()
     st.header("Stores Dataframe", anchor=False)
     st.dataframe(st.session_state['store_data'], use_container_width=True)
 
@@ -118,11 +119,17 @@ def bar_plot():
 def app():
     
     default_dataframes()
+    st.divider()
     merge_data_fn()
+    st.divider()
     sales_distribution()
+    st.divider()
     correlation_heatmap()
+    st.divider()
     box_plots()
+    st.divider()
     scatter_plots()
+    st.divider()
     bar_plot()
 
 if __name__ == '__main__':
