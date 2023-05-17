@@ -65,6 +65,8 @@ def merge_data_fn():
         st.session_state['merge_data'] = st.session_state['sales_data'].merge(st.session_state['store_data'], left_on='store', right_on='STORE', how='inner')
         if 'STORE' in st.session_state['merge_data']:
             del st.session_state['merge_data']['STORE']
+    st.header("Sales & Stores Dataset", anchor=False)
+    st.dataframe(st.session_state['merge_data'])
     st.header("Sales & Stores Dataset Summary Statistics", anchor=False)
     st.dataframe(st.session_state['merge_data'].describe())
     
