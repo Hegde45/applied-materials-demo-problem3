@@ -24,10 +24,10 @@ if 'sales_data' not in st.session_state:
 if 'store_data' not in st.session_state:
     st.session_state['store_data'] = pd.DataFrame(load_csv2())
 
-def app():
-    
+@st.cache_data
+def default_dataframes():
     st.title('''**Problem 3 - Dominick's Orange Juice Dataset Analysis**''', anchor=False)
-    
+
     if 'Unnamed: 0' in st.session_state['sales_data']:
         del st.session_state['sales_data']['Unnamed: 0']
     if 'Unnamed: 0' in st.session_state['store_data']:
@@ -37,38 +37,40 @@ def app():
         st.session_state['sales_data']['logmove'] = pd.to_numeric(st.session_state['sales_data']['logmove'])
         st.session_state['sales_data']['Units Sold'] = np.exp(st.session_state['sales_data']['logmove'])
 
-    # st.header("Sales Dataframe", anchor=False)
-    # st.dataframe(st.session_state['sales_data'], use_container_width=True)
+    st.header("Sales Dataframe", anchor=False)
+    st.dataframe(st.session_state['sales_data'], use_container_width=True)
     st.write("To get the number of units sold, an exponential transform has been applied to logmove column and resulting data has been written to **Units Sold** column")
 
-    # st.header("Sales Summary Statistics", anchor=False)
-    # st.dataframe(st.session_state['sales_data'].describe())
+    st.header("Sales Summary Statistics", anchor=False)
+    st.dataframe(st.session_state['sales_data'].describe())
 
-    # st.header("Stores Dataframe", anchor=False)
-    # st.dataframe(st.session_state['store_data'], use_container_width=True)
+    st.header("Stores Dataframe", anchor=False)
+    st.dataframe(st.session_state['store_data'], use_container_width=True)
 
-    # st.header("Stores Summary Statistics", anchor=False)
-    # st.dataframe(st.session_state['store_data'].describe())
+    st.header("Stores Summary Statistics", anchor=False)
+    st.dataframe(st.session_state['store_data'].describe())
 
-    st.header("Combined Dataframe", anchor=False)
-    merge_data = st.session_state['sales_data'].merge(st.session_state['store_data'], left_on='store', right_on='STORE', how='inner')
-    if 'STORE' in merge_data:
-        del merge_data['STORE']
-    # st.dataframe(merge_data, use_container_width=True)
-
-    st.header("Joined Summary Statistics", anchor=False)
-    st.dataframe(merge_data.describe())
-
-    # Distribution of sales
+@st.cache_data
+def sales_distribution():
     plt.figure(figsize=(10, 6))
-    sns.histplot(merge_data['Units Sold'], bins=20, kde=True)
+    sns.histplot(st.session_state['merge_data']['Units Sold'], bins=20, kde=True)
     plt.title('Distribution of Units Sold')
     plt.xlabel('Units Sold')
     plt.ylabel('Frequency')
     st.pyplot(plt)
 
-    # Correlation heatmap
-    merge_data_copy = merge_data.copy()
+@st.cache_data
+def merge_data_fn():
+    if 'merge_data' not in st.session_state:
+        st.session_state['merge_data'] = st.session_state['sales_data'].merge(st.session_state['store_data'], left_on='store', right_on='STORE', how='inner')
+        if 'STORE' in st.session_state['merge_data']:
+            del st.session_state['merge_data']['STORE']
+    st.header("Sales & Stores Dataset Summary Statistics", anchor=False)
+    st.dataframe(st.session_state['merge_data'].describe())
+    
+@st.cache_data
+def correlation_heatmap():
+    merge_data_copy = st.session_state['merge_data'].copy()
     if 'constant' in merge_data_copy:
         del merge_data_copy['constant']
     plt.figure(figsize=(60, 40), dpi=300)
@@ -81,9 +83,10 @@ def app():
     plt.tight_layout()
     st.pyplot(plt)
 
-    # Box plots
+@st.cache_data
+def box_plots():
     plt.figure(figsize=(10, 6))
-    sns.boxplot(data=merge_data, x='brand', y='Units Sold')
+    sns.boxplot(data=st.session_state['merge_data'], x='brand', y='Units Sold')
     plt.xlabel('Brand')
     plt.ylabel('Units Sold')
     plt.tick_params(axis = 'x', labelsize = 14)
@@ -91,22 +94,34 @@ def app():
     plt.title('Box Plot of Units Sold by Brand', fontsize = 20)
     st.pyplot(plt)
 
-    # Scatter plot
+@st.cache_data
+def scatter_plots():
     plt.figure(figsize=(10, 6))
-    sns.scatterplot(data=merge_data, x='INCOME', y='Units Sold')
+    sns.scatterplot(data=st.session_state['merge_data'], x='INCOME', y='Units Sold')
     plt.xlabel('Income')
     plt.ylabel('Units Sold')
     plt.title('Scatter Plot of Units Sold vs Income')
     st.pyplot(plt)
 
-    # Bar plot
-    avg_units_sold_by_brand = merge_data.groupby('brand')['Units Sold'].mean()
+@st.cache_data
+def bar_plot():
+    avg_units_sold_by_brand = st.session_state['merge_data'].groupby('brand')['Units Sold'].mean()
     plt.figure(figsize=(10, 6))
     sns.barplot(x=avg_units_sold_by_brand.index, y=avg_units_sold_by_brand.values)
     plt.xlabel('Brand')
     plt.ylabel('Average Units Sold')
     plt.title('Average Units Sold by Brand')
     st.pyplot(plt)
+
+def app():
+    
+    default_dataframes()
+    merge_data_fn()
+    sales_distribution()
+    correlation_heatmap()
+    box_plots()
+    scatter_plots()
+    bar_plot()
 
 if __name__ == '__main__':
     app()
